@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/globits
+    username: root
+    password: bach2612
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+
+  config:
+    import: optional:file:secret.yml
+
+jwt:
+  signerKey: "jhNAX7O#o0(yvSjqq?L25XhRYT(EWTZ@$5ScBNYifZs@f7TV&W@kt{$EvSVJ82N0"
