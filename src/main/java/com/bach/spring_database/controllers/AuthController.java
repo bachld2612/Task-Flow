@@ -2,11 +2,17 @@ package com.bach.spring_database.controllers;
 
 
 import com.bach.spring_database.dtos.ApiResponse;
+import com.bach.spring_database.dtos.requests.auth.IntrospectRequest;
+import com.bach.spring_database.dtos.requests.auth.LoginRequest;
+import com.bach.spring_database.dtos.requests.auth.LogoutRequest;
 import com.bach.spring_database.dtos.requests.auth.RegisterRequest;
 import com.bach.spring_database.dtos.requests.email.EmailVerificationRequest;
+import com.bach.spring_database.dtos.responses.auth.IntrospectResponse;
+import com.bach.spring_database.dtos.responses.auth.LoginResponse;
 import com.bach.spring_database.dtos.responses.auth.RegisterResponse;
 import com.bach.spring_database.dtos.responses.email.EmailVerificationResponse;
 import com.bach.spring_database.services.impl.AuthService;
+import com.nimbusds.jose.JOSEException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -20,8 +26,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
+
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Tag(name = "Authentication and Registration API", description = "This API for authentication and registration feature")
@@ -152,6 +160,111 @@ public class AuthController {
 
         return ApiResponse.<EmailVerificationResponse>builder()
                 .result(authService.activateAccount(request))
+                .build();
+
+    }
+
+
+    @Operation(
+            summary     = "User Login",
+            description = "Authenticates a user with provided credentials (username or email and password) and returns a JWT access token if successful."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Login successful",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+            {
+              "code": 1000,
+              "result": {
+                "token": "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJiYWNobGQiLCJzdWIiOiJiYWNobGQiLCJleHAiOjE3NDYwMTU4MjMsImlhdCI6MTc0NjAwNTAyMywianRpIjoiODRmNDQzNjEtMTVjMy00NGViLWI2MDEtZmQzZWQzNjNmYzBkIiwic2NvcGUiOiJVU0VSIn0.-s8OdXAMMG5xS-P6FD54BajkRRk4ZXSTzvp_kl4tXr7QDnZxRt45QvfjEldvwtX9G_i83IsoaLMKnjx62JcgHA"
+              }
+            }
+            """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description  = "Invalid credentials or request",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+            {
+              "code": "10xx",
+              "message": "Error Message"
+            }
+            """)
+                    )
+            )
+    })
+    @PostMapping("/token")
+    public ApiResponse<LoginResponse> login(@Valid LoginRequest loginRequest){
+
+        return ApiResponse.<LoginResponse>builder()
+                .result(authService.login(loginRequest))
+                .build();
+
+    }
+
+    @Operation(
+            summary     = "Introspect Access Token",
+            description = "Checks whether the provided access token is still valid. " +
+                    "Returns a JSON payload with a `valid` flag: `true` if the token is active, `false` otherwise."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Token introspection result",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+            {
+              "code": 1000,
+              "result": {
+                "valid": false
+              }
+            }
+            """)
+                    )
+            )
+    })
+    @PostMapping("/introspect")
+    public ApiResponse<IntrospectResponse> introspect(@Valid IntrospectRequest request){
+
+        return ApiResponse.<IntrospectResponse>builder()
+                .result(authService.introspect(request))
+                .build();
+
+    }
+
+    @Operation(
+            summary     = "User Logout",
+            description = "Invalidates the user's current session or token and logs the user out of the system. " +
+                    "Returns a confirmation message upon successful logout."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Logout successful",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+            {
+              "code": 1000,
+              "result": "Logout Successfully"
+            }
+            """)
+                    )
+            )
+    })
+    @PostMapping("/logout")
+    public ApiResponse<String> logout(LogoutRequest logoutRequest) throws ParseException, JOSEException {
+
+        authService.logout(logoutRequest);
+        return ApiResponse.<String>builder()
+                .result("Logout Successfully")
                 .build();
 
     }

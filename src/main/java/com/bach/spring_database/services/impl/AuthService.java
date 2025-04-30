@@ -2,10 +2,16 @@ package com.bach.spring_database.services.impl;
 
 
 import com.bach.spring_database.domains.EmailOTP;
+import com.bach.spring_database.domains.InvalidateToken;
 import com.bach.spring_database.domains.User;
+import com.bach.spring_database.dtos.requests.auth.IntrospectRequest;
+import com.bach.spring_database.dtos.requests.auth.LoginRequest;
+import com.bach.spring_database.dtos.requests.auth.LogoutRequest;
 import com.bach.spring_database.dtos.requests.auth.RegisterRequest;
 import com.bach.spring_database.dtos.requests.email.EmailRequest;
 import com.bach.spring_database.dtos.requests.email.EmailVerificationRequest;
+import com.bach.spring_database.dtos.responses.auth.IntrospectResponse;
+import com.bach.spring_database.dtos.responses.auth.LoginResponse;
 import com.bach.spring_database.dtos.responses.auth.RegisterResponse;
 import com.bach.spring_database.dtos.responses.email.EmailVerificationResponse;
 import com.bach.spring_database.exceptions.ApplicationException;
@@ -13,31 +19,50 @@ import com.bach.spring_database.exceptions.ErrorCode;
 import com.bach.spring_database.mappers.AuthMapper;
 import com.bach.spring_database.mappers.EmailMapper;
 import com.bach.spring_database.repositories.EmailOtpRepository;
+import com.bach.spring_database.repositories.InvalidateTokenRepository;
 import com.bach.spring_database.repositories.UserRepository;
 import com.bach.spring_database.services.IAuthService;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class AuthService implements IAuthService {
 
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
     UserRepository userRepository;
     EmailService emailService;
     AuthMapper authMapper;
     PasswordEncoder passwordEncoder;
     EmailOtpRepository emailOtpRepository;
     EmailMapper emailMapper;
+    InvalidateTokenRepository tokenRepository;
+
+    @NonFinal
+    @Value("${jwt.signerKey}")
+    private String SIGNER_KEY;
 
     @Override
     @Transactional
@@ -94,5 +119,92 @@ public class AuthService implements IAuthService {
         emailOtpRepository.save(emailMapper.toEmailOTP(emailRequest));
         emailService.sendOTP(email, code);
 
+    }
+
+    @Override
+    public LoginResponse login(LoginRequest request) {
+
+        User user = userRepository.findByUsernameOrEmail(request.getAccount(),request.getAccount())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.ACCOUNT_NOT_FOUND));
+
+        if(!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new ApplicationException(ErrorCode.PASSWORD_INCORRECT);
+        }
+
+        if(!user.isEnabled()){
+            throw new ApplicationException(ErrorCode.ACCOUNT_NOT_ACTIVATED);
+        }
+
+        return LoginResponse.builder()
+                .token(generateToken(user))
+                .build();
+
+    }
+
+    @Override
+    public IntrospectResponse introspect(IntrospectRequest request) {
+
+        boolean isValid = true;
+        try {
+            verifyToken(request.getToken());
+        }catch (Exception e){
+            isValid = false;
+        }
+        return IntrospectResponse.builder()
+                .valid(isValid)
+                .build();
+
+    }
+
+    @Override
+    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+
+        SignedJWT signedJWT = verifyToken(request.getToken());
+        String tokenId = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
+        InvalidateToken invalidateToken = InvalidateToken.builder()
+                .tokenId(tokenId)
+                .expiryTime(expiration)
+                .build();
+        tokenRepository.save(invalidateToken);
+
+    }
+
+    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+
+        JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        boolean verified = signedJWT.verify(verifier);
+        Date expiration = signedJWT.getJWTClaimsSet().getExpirationTime();
+        if(!(verified && expiration.after(new Date()))){
+            throw new ApplicationException(ErrorCode.UNAUTHENTICATED);
+        }
+        if (tokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+            throw new ApplicationException(ErrorCode.UNAUTHENTICATED);
+        }
+        return signedJWT;
+
+    }
+
+    private String generateToken(User request){
+
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+        JWTClaimsSet claims = new JWTClaimsSet.Builder()
+                .subject(request.getUsername())
+                .issuer("bachld")
+                .issueTime(new Date())
+                .expirationTime(new Date(Instant.now().plus(3, ChronoUnit.HOURS).toEpochMilli()))
+                .jwtID(UUID.randomUUID().toString())
+                .claim("scope", request.getRole())
+                .build();
+        Payload payload = new Payload(claims.toJSONObject());
+        JWSObject jwsObject = new JWSObject(header, payload);
+        try {
+            jwsObject.sign(new MACSigner(SIGNER_KEY));
+            return jwsObject.serialize();
+        }catch (JOSEException e) {
+            log.error("Cannot generate token", e);
+            throw new RuntimeException(e.getMessage());
+        }
     }
 }

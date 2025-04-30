@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -21,9 +22,6 @@ public class SecurityConfig {
 
     private final String[] PERMIT_ALL = {
             "/",
-            "/api/v1/register",
-            "/api/v1/activate-account",
-            "/api/v1/otp",
             "/api/v1/auth/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
@@ -47,12 +45,18 @@ public class SecurityConfig {
 
         http.exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint));
 
-//        http.oauth2ResourceServer(oauth2 ->
-//                oauth2.jwt(jwtConfigurer ->
-//                        jwtConfigurer
-//                                .jwtAuthenticationConverter(jwtConverter())));
+        http.oauth2ResourceServer(oauth2 ->
+                oauth2.jwt(jwtConfigurer ->
+                        jwtConfigurer
+                                .decoder(jwtDecoder())
+                                .jwtAuthenticationConverter(jwtConverter())));
         return http.build();
 
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        return new CustomJwtDecoder();
     }
 
     @Bean
