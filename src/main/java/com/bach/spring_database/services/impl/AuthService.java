@@ -77,7 +77,6 @@ public class AuthService implements IAuthService {
             throw new ApplicationException(ErrorCode.EXISTED_EMAIL);
         }
         request.setPassword(passwordEncoder.encode(request.getPassword()));
-        EmailOTP emailOTP = new EmailOTP();
         User user = userRepository.save(authMapper.toUser(request));
         return authMapper.toResponse(user);
 

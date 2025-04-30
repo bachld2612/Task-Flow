@@ -21,12 +21,11 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private final String[] PERMIT_ALL = {
-            "/",
+            "/test/**",
             "/api/v1/auth/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
-            "/api/v1/logout",
     };
 
     @Autowired

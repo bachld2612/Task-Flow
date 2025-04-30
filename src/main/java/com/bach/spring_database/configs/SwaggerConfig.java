@@ -2,6 +2,8 @@ package com.bach.spring_database.configs;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,7 +16,14 @@ public class SwaggerConfig {
                 .info(new Info()
                         .title("Task Flow")
                         .version("1.0.0")
-                        .description("Project Task Flow"));
+                        .description("Project Task Flow"))
+                .addSecurityItem(new SecurityRequirement().addList("BearerAuth"))
+                .components(new io.swagger.v3.oas.models.Components()
+                        .addSecuritySchemes("BearerAuth", new SecurityScheme()
+                                .name("BearerAuth")
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")));
     }
 
 }
