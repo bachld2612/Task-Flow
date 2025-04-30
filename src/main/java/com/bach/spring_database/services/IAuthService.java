@@ -9,7 +9,7 @@ import com.bach.spring_database.dtos.responses.email.EmailVerificationResponse;
 public interface IAuthService {
 
     RegisterResponse register(RegisterRequest request);
-    EmailVerificationResponse verifyEmail(EmailVerificationRequest request);
+    EmailVerificationResponse activateAccount(EmailVerificationRequest request);
     void generateAndSendEmail(String email);
 
 }

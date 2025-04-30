@@ -54,14 +54,13 @@ public class AuthService implements IAuthService {
         request.setPassword(passwordEncoder.encode(request.getPassword()));
         EmailOTP emailOTP = new EmailOTP();
         User user = userRepository.save(authMapper.toUser(request));
-        generateAndSendEmail(user.getEmail());
         return authMapper.toResponse(user);
 
     }
 
     @Override
     @Transactional
-    public EmailVerificationResponse verifyEmail(EmailVerificationRequest request) {
+    public EmailVerificationResponse activateAccount(EmailVerificationRequest request) {
 
         EmailOTP emailOTP = emailOtpRepository.findByEmailAndOtp(request.getEmail(),request.getOtp())
                 .orElseThrow(() -> new ApplicationException(ErrorCode.OTP_INVALID));

@@ -22,7 +22,7 @@ public class SecurityConfig {
     private final String[] PERMIT_ALL = {
             "/",
             "/api/v1/register",
-            "/api/v1/verifyEmail",
+            "/api/v1/activate-account",
             "/api/v1/otp",
             "/api/v1/auth/**",
             "/swagger-ui/**",

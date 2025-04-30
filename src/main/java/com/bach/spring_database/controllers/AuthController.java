@@ -147,11 +147,11 @@ public class AuthController {
                     )
             )
     })
-    @PostMapping("/verifyEmail")
-    public ApiResponse<EmailVerificationResponse> verifyEmail(EmailVerificationRequest request){
+    @PostMapping("/activate-account")
+    public ApiResponse<EmailVerificationResponse> activateAccount(EmailVerificationRequest request){
 
         return ApiResponse.<EmailVerificationResponse>builder()
-                .result(authService.verifyEmail(request))
+                .result(authService.activateAccount(request))
                 .build();
 
     }
