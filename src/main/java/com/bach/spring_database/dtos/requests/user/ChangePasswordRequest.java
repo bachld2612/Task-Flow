@@ -1,8 +1,6 @@
-package com.bach.spring_database.dtos.requests.auth;
+package com.bach.spring_database.dtos.requests.user;
 
-import com.bach.spring_database.enums.Role;
 import com.bach.spring_database.validations.FieldValueMatch;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -13,20 +11,18 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @FieldValueMatch(
-        field = "password",
+        field = "newPassword",
         fieldMatch = "confirmPassword",
         message = "INVALID_PASSWORD_CONFIRMATION"
 )
 
-public class RegisterRequest {
+public class ChangePasswordRequest {
 
-    @Size(min = 3, message = "USERNAME_INVALID")
-    String username;
     @Size(min = 8, message = "PASSWORD_INVALID")
-    String password;
+    String oldPassword;
+    @Size(min = 8, message = "NEW_PASSWORD_INVALID")
+    String newPassword;
     @Size(min = 8, message = "CONFIRM_PASSWORD_INVALID")
     String confirmPassword;
-    @Email(message = "EMAIL_INVALID", regexp = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")
-    String email;
 
 }

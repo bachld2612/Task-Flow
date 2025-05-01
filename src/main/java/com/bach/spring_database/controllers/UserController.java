@@ -1,12 +1,15 @@
 package com.bach.spring_database.controllers;
 
 import com.bach.spring_database.dtos.ApiResponse;
+import com.bach.spring_database.dtos.requests.user.ChangePasswordRequest;
+import com.bach.spring_database.dtos.responses.user.ChangePasswordResponse;
 import com.bach.spring_database.services.impl.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -69,6 +72,15 @@ public class UserController {
         userService.uploadAvatar(file);
         return ApiResponse.<String>builder()
                 .result("Upload avatar successfully")
+                .build();
+
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<ChangePasswordResponse> changePassword(@Valid ChangePasswordRequest request) {
+
+        return ApiResponse.<ChangePasswordResponse>builder()
+                .result(userService.changePassword(request))
                 .build();
 
     }
