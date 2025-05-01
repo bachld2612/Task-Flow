@@ -2,6 +2,7 @@ package com.bach.spring_database.exceptions;
 
 import com.bach.spring_database.dtos.ApiResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -18,6 +19,19 @@ public class GlobalExceptionHandler {
 
         ApiResponse<?> apiResponse = new ApiResponse<>();
         ErrorCode errorCode = e.getErrorCode();
+        apiResponse.setCode(errorCode.getCode());
+        apiResponse.setMessage(errorCode.getMessage());
+        return ResponseEntity
+                .status(errorCode.getHttpStatusCode())
+                .body(apiResponse);
+
+    }
+
+    @ExceptionHandler(value = AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<?>> accessDeniedException(final AccessDeniedException e) {
+
+        ApiResponse<?> apiResponse = new ApiResponse<>();
+        ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
         apiResponse.setCode(errorCode.getCode());
         apiResponse.setMessage(errorCode.getMessage());
         return ResponseEntity

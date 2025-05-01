@@ -49,6 +49,7 @@ import java.util.UUID;
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
+@Transactional
 public class AuthService implements IAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
@@ -65,7 +66,6 @@ public class AuthService implements IAuthService {
     private String SIGNER_KEY;
 
     @Override
-    @Transactional
     public RegisterResponse register(RegisterRequest request) {
 
         Optional<User> existingUsername = userRepository.findByUsername(request.getUsername());
@@ -83,7 +83,6 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    @Transactional
     public EmailVerificationResponse activateAccount(EmailVerificationRequest request) {
 
         EmailOTP emailOTP = emailOtpRepository.findByEmailAndOtp(request.getEmail(),request.getOtp())
@@ -103,7 +102,6 @@ public class AuthService implements IAuthService {
     }
 
     @Override
-    @Transactional
     public void generateAndSendEmail(String email) {
 
         emailOtpRepository.deleteByEmail(email);

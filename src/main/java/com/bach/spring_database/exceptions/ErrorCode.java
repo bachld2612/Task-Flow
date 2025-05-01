@@ -28,6 +28,7 @@ public enum ErrorCode {
     INVALID_PASSWORD_CONFIRMATION(1015, "Confirm password must be the same as new password", HttpStatus.BAD_REQUEST),
     NEW_PASSWORD_INVALID(1016, "New password must be at least 8 characters", HttpStatus.BAD_REQUEST),
     CONFIRM_PASSWORD_INVALID(1017, "Confirm password must be at least 8 characters", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED(1018, "Unauthorized", HttpStatus.UNAUTHORIZED),
     ;
     int code;
     String message;

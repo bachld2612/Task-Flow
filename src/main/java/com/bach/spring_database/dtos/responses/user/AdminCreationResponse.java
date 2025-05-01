@@ -1,4 +1,4 @@
-package com.bach.spring_database.dtos.responses.auth;
+package com.bach.spring_database.dtos.responses.user;
 
 import com.bach.spring_database.enums.Role;
 import lombok.*;
@@ -11,7 +11,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RegisterResponse {
+public class AdminCreationResponse {
 
     String username;
     String password;

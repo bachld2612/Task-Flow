@@ -53,7 +53,6 @@ public class AuthController {
                 {
                   "code": 1000,
                   "result": {
-                    "id": "2203fe89-035e-4217-83e3-253811d4c60c",
                     "username": "bachld1",
                     "password": "$2a$10$N5ZninP9faLWDBx/.rd70OC9DQu25QDzbb7lwwf6uvLkF0KAzBIGq",
                     "email": "lyduybach700@gmail.com",

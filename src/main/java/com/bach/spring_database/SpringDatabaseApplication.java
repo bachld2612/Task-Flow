@@ -29,7 +29,7 @@ public class SpringDatabaseApplication {
                 User user = new User();
                 user.setEnabled(true);
                 user.setUsername("admin");
-                user.setPassword(passwordEncoder.encode("admin"));
+                user.setPassword(passwordEncoder.encode("admin123"));
                 user.setRole(Role.ADMIN);
                 userRepository.save(user);
                 log.info("Admin user created");
