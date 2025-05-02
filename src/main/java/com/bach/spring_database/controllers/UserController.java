@@ -5,6 +5,7 @@ import com.bach.spring_database.dtos.requests.user.AdminCreationRequest;
 import com.bach.spring_database.dtos.requests.user.ChangePasswordRequest;
 import com.bach.spring_database.dtos.responses.user.AdminCreationResponse;
 import com.bach.spring_database.dtos.responses.user.ChangePasswordResponse;
+import com.bach.spring_database.dtos.responses.user.UserResponse;
 import com.bach.spring_database.services.impl.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,6 +16,11 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -206,6 +212,114 @@ public class UserController {
 
         return ApiResponse.<AdminCreationResponse>builder()
                 .result(userService.createAdmin(request))
+                .build();
+
+    }
+
+
+    @Operation(
+            summary     = "Get All Users",
+            description = "Retrieves a paginated list of all users. Access restricted to ADMIN role."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "Users retrieved successfully",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+                            {
+                              "code": 1000,
+                              "result": {
+                                "content": [
+                                  {
+                                    "id": "af2f7314-44c0-4c9a-b15f-62141472f867",
+                                    "username": "bachld1",
+                                    "email": "lyduybach700@gmail.com",
+                                    "avatarUrl": "/images/default_avatar.png",
+                                    "role": "USER",
+                                    "enabled": true,
+                                    "updatedAt": "2025-05-02"
+                                  },
+                                  {
+                                    "id": "ef34941a-5d42-4457-8783-d9643c6950b5",
+                                    "username": "bachld",
+                                    "email": "lyduybach800@gmail.com",
+                                    "avatarUrl": "https://res.cloudinary.com/dpvxx0v6y/image/upload/v1746025014/xhayiexs0ifbzgvqgenj.jpg",
+                                    "role": "MANAGER",
+                                    "enabled": true,
+                                    "updatedAt": "2025-05-02"
+                                  },
+                                  {
+                                    "id": "2fb1ec7f-4914-4bac-ad0f-a9f8b2eced2b",
+                                    "username": "admin1",
+                                    "email": "admin@gmail.com",
+                                    "avatarUrl": "/images/default_avatar.png",
+                                    "role": "ADMIN",
+                                    "enabled": true,
+                                    "updatedAt": "2025-05-01"
+                                  },
+                                  {
+                                    "id": "f5747965-4f27-4d85-95f5-d9143709e69d",
+                                    "username": "admin",
+                                    "email": null,
+                                    "avatarUrl": "/images/default_avatar.png",
+                                    "role": "ADMIN",
+                                    "enabled": true,
+                                    "updatedAt": "2025-05-01"
+                                  }
+                                ],
+                                "pageable": {
+                                  "pageNumber": 0,
+                                  "pageSize": 10,
+                                  "sort": {
+                                    "empty": false,
+                                    "sorted": true,
+                                    "unsorted": false
+                                  },
+                                  "offset": 0,
+                                  "paged": true,
+                                  "unpaged": false
+                                },
+                                "last": true,
+                                "totalPages": 1,
+                                "totalElements": 4,
+                                "first": true,
+                                "numberOfElements": 4,
+                                "size": 10,
+                                "number": 0,
+                                "sort": {
+                                  "empty": false,
+                                  "sorted": true,
+                                  "unsorted": false
+                                },
+                                "empty": false
+                              }
+                            }
+                        """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+                            {
+                              "code": 1018,
+                              "message": "Unauthorized"
+                            }
+                        """)
+                    )
+            )
+    })
+    @GetMapping
+    public ApiResponse<Page<UserResponse>> getUsers(
+            @PageableDefault(page = 0, size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+
+        return ApiResponse.<Page<UserResponse>>builder()
+                .result(userService.getAllUsers(pageable))
                 .build();
 
     }

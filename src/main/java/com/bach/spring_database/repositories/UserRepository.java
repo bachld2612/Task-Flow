@@ -1,6 +1,8 @@
 package com.bach.spring_database.repositories;
 
 import com.bach.spring_database.domains.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 
@@ -16,5 +18,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Modifying
     void deleteByUsername(String username);
     Set<User> findAllByUsernameIn(Set<String> usernames);
+    Page<User> findAllByProjects_Id(UUID projectId, Pageable pageable);
 
 }

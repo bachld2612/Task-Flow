@@ -5,6 +5,7 @@ import com.bach.spring_database.domains.User;
 import com.bach.spring_database.dtos.requests.project.ProjectCreationRequest;
 import com.bach.spring_database.dtos.responses.project.AddMemberToProjectResponse;
 import com.bach.spring_database.dtos.responses.project.ProjectCreationResponse;
+import com.bach.spring_database.dtos.responses.project.ProjectResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
@@ -21,6 +22,8 @@ public interface ProjectMapper {
     @Mapping(target = "project_name", source = "name")
     @Mapping(target = "memberNames", source = "members")
     AddMemberToProjectResponse toAddMemberToProjectResponse(Project project);
+
+    ProjectResponse toProjectResponse(Project project);
 
     default String map(User user) {
         return user.getUsername();

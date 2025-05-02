@@ -5,6 +5,7 @@ import com.bach.spring_database.dtos.requests.user.AdminCreationRequest;
 import com.bach.spring_database.dtos.requests.user.ChangePasswordRequest;
 import com.bach.spring_database.dtos.responses.user.AdminCreationResponse;
 import com.bach.spring_database.dtos.responses.user.ChangePasswordResponse;
+import com.bach.spring_database.dtos.responses.user.UserResponse;
 import com.bach.spring_database.enums.Role;
 import com.bach.spring_database.exceptions.ApplicationException;
 import com.bach.spring_database.exceptions.ErrorCode;
@@ -15,6 +16,8 @@ import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -97,6 +100,15 @@ public class UserService implements IUserService {
         userRepository.save(user);
 
         return userMapper.toAdminCreationResponse(user);
+
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    @Override
+    public Page<UserResponse> getAllUsers(Pageable pageable) {
+
+        Page<User> users = userRepository.findAll(pageable);
+        return users.map(userMapper::toUserResponse);
 
     }
 }
