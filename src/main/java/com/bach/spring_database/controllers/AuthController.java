@@ -32,7 +32,7 @@ import java.text.ParseException;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Tag(name = "Authentication and Registration API", description = "This API for authentication and registration feature")
+@Tag(name = "Authentication and Registration APIs", description = "These API for authentication and registration features")
 public class AuthController {
 
     AuthService authService;

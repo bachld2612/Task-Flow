@@ -29,6 +29,9 @@ public enum ErrorCode {
     NEW_PASSWORD_INVALID(1016, "New password must be at least 8 characters", HttpStatus.BAD_REQUEST),
     CONFIRM_PASSWORD_INVALID(1017, "Confirm password must be at least 8 characters", HttpStatus.BAD_REQUEST),
     UNAUTHORIZED(1018, "Unauthorized", HttpStatus.UNAUTHORIZED),
+    PROJECT_NOT_FOUND(1019, "Project not found", HttpStatus.NOT_FOUND),
+    PROJECT_ACCESS_DENIED(1020, "Project access denied", HttpStatus.UNAUTHORIZED),
+    NO_USERNAME(1021, "You must add at least one user", HttpStatus.BAD_REQUEST),
     ;
     int code;
     String message;

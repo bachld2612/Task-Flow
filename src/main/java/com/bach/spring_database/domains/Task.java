@@ -2,6 +2,8 @@ package com.bach.spring_database.domains;
 
 
 import com.bach.spring_database.enums.Status;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -17,9 +19,11 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Task extends BaseEntityAudit{
 
     String title;
+    @Column(columnDefinition = "TEXT")
     String description;
     Status status = Status.TODO;
     @Column(name = "due_date")
@@ -35,5 +39,7 @@ public class Task extends BaseEntityAudit{
     Set<Attachment> attachments = new HashSet<>();
     @OneToMany(mappedBy = "task")
     Set<Comment> comments = new HashSet<>();
+    @ManyToOne(optional = false)
+    Project project;
 
 }

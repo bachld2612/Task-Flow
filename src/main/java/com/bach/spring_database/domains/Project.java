@@ -1,5 +1,8 @@
 package com.bach.spring_database.domains;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -14,9 +17,11 @@ import java.util.Set;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class Project extends BaseEntityAudit{
 
     String name;
+    @Column(columnDefinition = "TEXT")
     String description;
     @ManyToOne(optional = false)
     @JoinColumn(name = "manager_id")
@@ -28,5 +33,7 @@ public class Project extends BaseEntityAudit{
             inverseJoinColumns = @JoinColumn(name = "member_id")
     )
     Set<User> members = new HashSet<>();
+    @OneToMany(mappedBy = "project")
+    Set<Task> tasks = new HashSet<>();
 
 }

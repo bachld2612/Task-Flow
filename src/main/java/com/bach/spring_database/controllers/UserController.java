@@ -23,7 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Tag(name = "User API", description = "This API for user feature, to use this api group, please login to get jwt token and provide it!")
+@Tag(name = "User APIs", description = "These APIs for user features, to use these APIs, please login to get jwt token and provide it!")
 public class UserController {
 
     UserService userService;
