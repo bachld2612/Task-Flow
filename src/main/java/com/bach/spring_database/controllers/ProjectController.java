@@ -2,8 +2,10 @@ package com.bach.spring_database.controllers;
 
 import com.bach.spring_database.dtos.ApiResponse;
 import com.bach.spring_database.dtos.requests.project.AddMemberToProjectRequest;
+import com.bach.spring_database.dtos.requests.project.DeleteMemberFromProjectRequest;
 import com.bach.spring_database.dtos.requests.project.ProjectCreationRequest;
 import com.bach.spring_database.dtos.responses.project.AddMemberToProjectResponse;
+import com.bach.spring_database.dtos.responses.project.DeleteMemberFromProjectResponse;
 import com.bach.spring_database.dtos.responses.project.ProjectCreationResponse;
 import com.bach.spring_database.dtos.responses.project.ProjectResponse;
 import com.bach.spring_database.dtos.responses.user.UserResponse;
@@ -45,8 +47,12 @@ public class ProjectController {
                             mediaType = "application/json",
                             schema    = @Schema(example = """
                             {
-                              "name": "Project",
-                              "description": "Project Description"
+                               "code": 1000,
+                               "result": {
+                                 "name": "pet project 2",
+                                 "description": "pet project of bach company",
+                                 "managerName": "bachld"
+                               }
                             }
                         """)
                     )
@@ -363,10 +369,21 @@ public class ProjectController {
     })
     @DeleteMapping("/{projectId}")
     public ApiResponse<String> deleteProject(@PathVariable UUID projectId) {
+
         projectService.deleteProject(projectId);
         return ApiResponse.<String>builder()
                 .message("Deleted project successfully")
                 .build();
+
+    }
+
+    @PutMapping("/{projectId}/delete-member")
+    public ApiResponse<DeleteMemberFromProjectResponse> deleteMemberFromProject(@PathVariable UUID projectId, @RequestBody DeleteMemberFromProjectRequest request) {
+
+        return ApiResponse.<DeleteMemberFromProjectResponse>builder()
+                .result(projectService.deleteMemberFromProject(request, projectId))
+                .build();
+
     }
 
 }

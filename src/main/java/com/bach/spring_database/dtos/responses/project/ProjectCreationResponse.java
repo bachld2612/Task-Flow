@@ -13,6 +13,6 @@ public class ProjectCreationResponse {
 
     String name;
     String description;
-    User manager;
+    String managerName;
 
 }

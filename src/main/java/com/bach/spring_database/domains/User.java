@@ -33,7 +33,11 @@ public class User extends BaseEntityAudit{
     Role role = Role.USER;
     @ManyToMany(mappedBy = "members")
     Set<Project> projects = new HashSet<>();
-    @OneToMany(mappedBy = "manager")
+    @OneToMany(
+            mappedBy = "manager",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
     Set<Project> managedProjects = new HashSet<>();
     @ManyToMany(mappedBy = "users")
     Set<Task> tasks = new HashSet<>();

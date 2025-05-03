@@ -33,7 +33,11 @@ public class Project extends BaseEntityAudit{
             inverseJoinColumns = @JoinColumn(name = "member_id")
     )
     Set<User> members = new HashSet<>();
-    @OneToMany(mappedBy = "project")
+    @OneToMany(
+            mappedBy = "project",
+            cascade = CascadeType.REMOVE,
+            orphanRemoval = true
+    )
     Set<Task> tasks = new HashSet<>();
 
 }

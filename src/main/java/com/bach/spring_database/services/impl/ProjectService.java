@@ -3,8 +3,10 @@ package com.bach.spring_database.services.impl;
 import com.bach.spring_database.domains.Project;
 import com.bach.spring_database.domains.User;
 import com.bach.spring_database.dtos.requests.project.AddMemberToProjectRequest;
+import com.bach.spring_database.dtos.requests.project.DeleteMemberFromProjectRequest;
 import com.bach.spring_database.dtos.requests.project.ProjectCreationRequest;
 import com.bach.spring_database.dtos.responses.project.AddMemberToProjectResponse;
+import com.bach.spring_database.dtos.responses.project.DeleteMemberFromProjectResponse;
 import com.bach.spring_database.dtos.responses.project.ProjectCreationResponse;
 import com.bach.spring_database.dtos.responses.project.ProjectResponse;
 import com.bach.spring_database.dtos.responses.user.UserResponse;
@@ -65,16 +67,11 @@ public class ProjectService implements IProjectService {
     @PreAuthorize("hasAuthority('SCOPE_MANAGER')")
     public AddMemberToProjectResponse addMemberToProject(AddMemberToProjectRequest request, UUID projectId) {
 
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ApplicationException(ErrorCode.PROJECT_NOT_FOUND));
-        User manager = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
 
-        // check if user are the manager of the project or ADMIN
-        if(manager.getRole() != Role.ADMIN && !Objects.equals(project.getManager().getUsername(), authentication.getName())){
-            throw new ApplicationException(ErrorCode.PROJECT_ACCESS_DENIED);
-        }
+        validateProjectManager(project);
 
         if(request.getUsernames().isEmpty()){
             throw new ApplicationException(ErrorCode.NO_USERNAME);
@@ -90,6 +87,7 @@ public class ProjectService implements IProjectService {
             project.getMembers().add(member);
             member.getProjects().add(project);
         });
+
 
         return projectMapper.toAddMemberToProjectResponse(projectRepository.save(project));
     }
@@ -125,18 +123,61 @@ public class ProjectService implements IProjectService {
     }
 
     @PreAuthorize("hasAuthority('SCOPE_MANAGER')")
+    @Transactional
     @Override
     public void deleteProject(UUID projectId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.PROJECT_NOT_FOUND));
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        User manager = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
+        validateProjectManager(project);
+        manager.getManagedProjects().remove(project);
+        projectRepository.delete(project);
+        if(manager.getManagedProjects().isEmpty() && manager.getRole() != Role.ADMIN){
+            manager.setRole(Role.USER);
+        }
+
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_MANAGER')")
+    @Transactional
+    @Override
+    public DeleteMemberFromProjectResponse deleteMemberFromProject(DeleteMemberFromProjectRequest request, UUID projectId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.PROJECT_NOT_FOUND));
+
+        validateProjectManager(project);
+
+        if(request.getUsernames().isEmpty()){
+            throw new ApplicationException(ErrorCode.NO_USERNAME);
+        }
+
+        Set<User> members = userRepository.findAllByUsernameIn(request.getUsernames());
+        if(members.size() != request.getUsernames().size()){
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        members.forEach((member) -> {
+            project.getMembers().remove(member);
+            member.getProjects().remove(project);
+        });
+
+        return projectMapper.toDeleteMemberFromProjectResponse(projectRepository.save(project));
+
+    }
+
+    private void validateProjectManager(Project project){
 
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         User manager = userRepository.findByUsername(authentication.getName())
                 .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ApplicationException(ErrorCode.PROJECT_NOT_FOUND));
         if(manager.getRole() != Role.ADMIN && !Objects.equals(project.getManager().getUsername(), authentication.getName())){
             throw new ApplicationException(ErrorCode.PROJECT_ACCESS_DENIED);
         }
-        projectRepository.delete(project);
 
     }
+
 }
