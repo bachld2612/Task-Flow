@@ -10,6 +10,7 @@ import com.bach.task_flow.dtos.requests.auth.LogoutRequest;
 import com.bach.task_flow.dtos.requests.auth.RegisterRequest;
 import com.bach.task_flow.dtos.requests.email.EmailRequest;
 import com.bach.task_flow.dtos.requests.email.EmailVerificationRequest;
+import com.bach.task_flow.dtos.responses.auth.InfoResponse;
 import com.bach.task_flow.dtos.responses.auth.IntrospectResponse;
 import com.bach.task_flow.dtos.responses.auth.LoginResponse;
 import com.bach.task_flow.dtos.responses.auth.RegisterResponse;
@@ -35,6 +36,8 @@ import lombok.experimental.NonFinal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -165,6 +168,15 @@ public class AuthServiceImpl implements com.bach.task_flow.services.AuthService 
                 .build();
         tokenRepository.save(invalidateToken);
 
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @Override
+    public InfoResponse getMyInfo() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
+        return authMapper.toInfoResponse(user);
     }
 
     private SignedJWT verifyToken(String token) throws JOSEException, ParseException {

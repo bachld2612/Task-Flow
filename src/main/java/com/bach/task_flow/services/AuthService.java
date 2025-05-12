@@ -5,6 +5,7 @@ import com.bach.task_flow.dtos.requests.auth.LoginRequest;
 import com.bach.task_flow.dtos.requests.auth.LogoutRequest;
 import com.bach.task_flow.dtos.requests.auth.RegisterRequest;
 import com.bach.task_flow.dtos.requests.email.EmailVerificationRequest;
+import com.bach.task_flow.dtos.responses.auth.InfoResponse;
 import com.bach.task_flow.dtos.responses.auth.IntrospectResponse;
 import com.bach.task_flow.dtos.responses.auth.LoginResponse;
 import com.bach.task_flow.dtos.responses.auth.RegisterResponse;
@@ -21,5 +22,6 @@ public interface AuthService {
     LoginResponse login(LoginRequest request);
     IntrospectResponse introspect(IntrospectRequest token);
     void logout(LogoutRequest request) throws ParseException, JOSEException;
+    InfoResponse getMyInfo();
 
 }

@@ -116,7 +116,9 @@ public class ProjectServiceImpl implements com.bach.task_flow.services.ProjectSe
     @Override
     public Page<ProjectResponse> getProjects(Pageable pageable) {
 
-        Page<Project> projects = projectRepository.findAll(pageable);
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        Page<Project> projects = projectRepository
+                .findAllByMembers_UsernameOrManager_Username(pageable, authentication.getName(), authentication.getName());
         return projects.map(projectMapper::toProjectResponse);
 
     }

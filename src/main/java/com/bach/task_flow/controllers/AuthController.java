@@ -7,6 +7,7 @@ import com.bach.task_flow.dtos.requests.auth.LoginRequest;
 import com.bach.task_flow.dtos.requests.auth.LogoutRequest;
 import com.bach.task_flow.dtos.requests.auth.RegisterRequest;
 import com.bach.task_flow.dtos.requests.email.EmailVerificationRequest;
+import com.bach.task_flow.dtos.responses.auth.InfoResponse;
 import com.bach.task_flow.dtos.responses.auth.IntrospectResponse;
 import com.bach.task_flow.dtos.responses.auth.LoginResponse;
 import com.bach.task_flow.dtos.responses.auth.RegisterResponse;
@@ -22,6 +23,7 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -268,6 +270,14 @@ public class AuthController {
 
     }
 
+    @GetMapping("/my-info")
+    public ApiResponse<InfoResponse> getMyInfo(){
+
+        return ApiResponse.<InfoResponse>builder()
+                .result(authService.getMyInfo())
+                .build();
+
+    }
 
 
 }
