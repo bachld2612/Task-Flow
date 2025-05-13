@@ -11,5 +11,6 @@ import java.util.UUID;
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
     Page<Project> findAllByMembers_UsernameOrManager_Username(Pageable pageable, String memberName, String managerName);
+    boolean existsByIdAndMembers_Username(UUID id, String memberName);
 
 }

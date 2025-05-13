@@ -270,6 +270,43 @@ public class AuthController {
 
     }
 
+    @Operation(
+            summary     = "Get My Info",
+            description = "Retrieves the profile information of the currently authenticated user."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description  = "User info retrieved successfully",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+                            {
+                              "code": 1000,
+                              "result": {
+                                "id": "ef34941a-5d42-4457-8783-d9643c6950b5",
+                                "username": "bachld",
+                                "email": "lyduybach800@gmail.com",
+                                "avatarUrl": "https://res.cloudinary.com/dpvxx0v6y/image/upload/v1746025014/xhayiexs0ifbzgvqgenj.jpg"
+                              }
+                            }
+                        """)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description  = "Unauthorized",
+                    content      = @Content(
+                            mediaType = "application/json",
+                            schema    = @Schema(example = """
+                            {
+                              "code": 1018,
+                              "message": "Unauthorized"
+                            }
+                        """)
+                    )
+            )
+    })
     @GetMapping("/my-info")
     public ApiResponse<InfoResponse> getMyInfo(){
 

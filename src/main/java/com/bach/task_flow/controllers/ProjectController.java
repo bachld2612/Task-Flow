@@ -8,6 +8,7 @@ import com.bach.task_flow.dtos.responses.project.AddMemberToProjectResponse;
 import com.bach.task_flow.dtos.responses.project.DeleteMemberFromProjectResponse;
 import com.bach.task_flow.dtos.responses.project.ProjectCreationResponse;
 import com.bach.task_flow.dtos.responses.project.ProjectResponse;
+import com.bach.task_flow.dtos.responses.task.TaskResponse;
 import com.bach.task_flow.dtos.responses.user.UserResponse;
 import com.bach.task_flow.services.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -382,6 +383,16 @@ public class ProjectController {
 
         return ApiResponse.<DeleteMemberFromProjectResponse>builder()
                 .result(projectService.deleteMemberFromProject(request, projectId))
+                .build();
+
+    }
+
+    @GetMapping("/{projectId}/task")
+    public ApiResponse<Page<TaskResponse>> getTasks(@PathVariable UUID projectId,
+                                                    @PageableDefault(page = 0, size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable){
+
+        return ApiResponse.<Page<TaskResponse>>builder()
+                .result(projectService.getAllTasksInProject(projectId, pageable))
                 .build();
 
     }

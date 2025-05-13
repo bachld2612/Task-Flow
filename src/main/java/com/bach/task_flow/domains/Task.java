@@ -35,12 +35,7 @@ public class Task extends BaseEntityAudit{
             inverseJoinColumns = @JoinColumn(name = "user_id")
     )
     Set<User> users = new HashSet<>();
-    @OneToMany(
-            mappedBy = "task",
-            cascade = CascadeType.REMOVE,
-            orphanRemoval = true
-    )
-    Set<Attachment> attachments = new HashSet<>();
+
     @OneToMany(
             mappedBy = "task",
             cascade = CascadeType.REMOVE,

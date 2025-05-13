@@ -7,6 +7,7 @@ import com.bach.task_flow.dtos.responses.project.AddMemberToProjectResponse;
 import com.bach.task_flow.dtos.responses.project.DeleteMemberFromProjectResponse;
 import com.bach.task_flow.dtos.responses.project.ProjectCreationResponse;
 import com.bach.task_flow.dtos.responses.project.ProjectResponse;
+import com.bach.task_flow.dtos.responses.task.TaskResponse;
 import com.bach.task_flow.dtos.responses.user.UserResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ public interface ProjectService {
     Page<ProjectResponse> getProjects(Pageable pageable);
     void deleteProject(UUID projectId);
     DeleteMemberFromProjectResponse deleteMemberFromProject(DeleteMemberFromProjectRequest request, UUID projectId);
+    Page<TaskResponse> getAllTasksInProject(UUID projectId, Pageable pageable);
 
 
 }

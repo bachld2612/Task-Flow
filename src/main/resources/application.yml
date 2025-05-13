@@ -14,5 +14,3 @@ spring:
   config:
     import: optional:file:secret.yml
 
-jwt:
-  signerKey: "jhNAX7O#o0(yvSjqq?L25XhRYT(EWTZ@$5ScBNYifZs@f7TV&W@kt{$EvSVJ82N0"

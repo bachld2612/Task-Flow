@@ -32,6 +32,10 @@ public enum ErrorCode {
     PROJECT_NOT_FOUND(1019, "Project not found", HttpStatus.NOT_FOUND),
     PROJECT_ACCESS_DENIED(1020, "Project access denied", HttpStatus.UNAUTHORIZED),
     NO_USERNAME(1021, "You must add at least one user", HttpStatus.BAD_REQUEST),
+    PROJECT_NOT_NULL(1022, "Project must not be null", HttpStatus.BAD_REQUEST),
+    INVALID_DUE_DATE(1023, "Due date must be after today", HttpStatus.BAD_REQUEST),
+    TASK_NOT_FOUND(1024, "Task not found", HttpStatus.NOT_FOUND),
+    TASK_ACCESS_DENIED(1025, "Task access denied", HttpStatus.BAD_REQUEST),
     ;
     int code;
     String message;

@@ -1,6 +1,7 @@
 package com.bach.task_flow.services.impl;
 
 import com.bach.task_flow.domains.Project;
+import com.bach.task_flow.domains.Task;
 import com.bach.task_flow.domains.User;
 import com.bach.task_flow.dtos.requests.project.AddMemberToProjectRequest;
 import com.bach.task_flow.dtos.requests.project.DeleteMemberFromProjectRequest;
@@ -9,13 +10,16 @@ import com.bach.task_flow.dtos.responses.project.AddMemberToProjectResponse;
 import com.bach.task_flow.dtos.responses.project.DeleteMemberFromProjectResponse;
 import com.bach.task_flow.dtos.responses.project.ProjectCreationResponse;
 import com.bach.task_flow.dtos.responses.project.ProjectResponse;
+import com.bach.task_flow.dtos.responses.task.TaskResponse;
 import com.bach.task_flow.dtos.responses.user.UserResponse;
 import com.bach.task_flow.enums.Role;
 import com.bach.task_flow.exceptions.ApplicationException;
 import com.bach.task_flow.exceptions.ErrorCode;
 import com.bach.task_flow.mappers.ProjectMapper;
+import com.bach.task_flow.mappers.TaskMapper;
 import com.bach.task_flow.mappers.UserMapper;
 import com.bach.task_flow.repositories.ProjectRepository;
+import com.bach.task_flow.repositories.TaskRepository;
 import com.bach.task_flow.repositories.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -40,6 +44,8 @@ public class ProjectServiceImpl implements com.bach.task_flow.services.ProjectSe
     UserRepository userRepository;
     ProjectMapper projectMapper;
     UserMapper userMapper;
+    TaskRepository taskRepository;
+    TaskMapper taskMapper;
 
     @Transactional
     @PreAuthorize("isAuthenticated()")
@@ -167,6 +173,22 @@ public class ProjectServiceImpl implements com.bach.task_flow.services.ProjectSe
         });
 
         return projectMapper.toDeleteMemberFromProjectResponse(projectRepository.save(project));
+
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @Override
+    public Page<TaskResponse> getAllTasksInProject(UUID projectId, Pageable pageable) {
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.PROJECT_NOT_FOUND));
+        if(!Objects.equals(project.getManager().getUsername(), authentication.getName())
+                        && !projectRepository.existsByIdAndMembers_Username(projectId, authentication.getName())){
+           throw new ApplicationException(ErrorCode.PROJECT_ACCESS_DENIED);
+        }
+        Page<Task> tasks = taskRepository.findAllByProject_Id(projectId, pageable);
+        return tasks.map((taskMapper::toTaskResponse));
 
     }
 
