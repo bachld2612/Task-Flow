@@ -37,23 +37,4 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         response.flushBuffer();
     }
 
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        ApiResponse<String> response = new ApiResponse<>();
-        ErrorCode errorCode = null;
-        try {
-            String message = Objects.requireNonNull(e.getFieldError()).getDefaultMessage();
-            errorCode = ErrorCode.valueOf(message);
-            response.setCode(errorCode.getCode());
-            response.setMessage(errorCode.getMessage());
-        }catch (Exception ex) {
-            errorCode = ErrorCode.INVALID_VALIDATION;
-            response.setCode(errorCode.getCode());
-            response.setMessage(errorCode.getMessage());
-        }
-        return ResponseEntity
-                .status(errorCode.getHttpStatusCode())
-                .body(response);
-    }
-
 }
