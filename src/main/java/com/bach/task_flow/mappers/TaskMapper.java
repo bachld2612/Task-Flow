@@ -28,6 +28,8 @@ public interface TaskMapper {
     StatusUpdateResponse toStatusUpdateResponse(Task task);
     @Mapping(target = "usernames", source = "users")
     AddUserToTaskResponse toAddUserToTaskResponse(Task task);
+    @Mapping(target = "usernames", source = "users")
+    DeleteUserFromTaskResponse toDeleteUserFromTaskResponse(Task task);
 
     default String map(User user) {
         return user.getUsername();

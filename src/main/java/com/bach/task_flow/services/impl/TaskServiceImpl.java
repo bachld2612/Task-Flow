@@ -3,19 +3,15 @@ package com.bach.task_flow.services.impl;
 import com.bach.task_flow.domains.Project;
 import com.bach.task_flow.domains.Task;
 import com.bach.task_flow.domains.User;
-import com.bach.task_flow.dtos.requests.task.AddUserToTaskRequest;
-import com.bach.task_flow.dtos.requests.task.StatusUpdateRequest;
-import com.bach.task_flow.dtos.requests.task.TaskCreationRequest;
-import com.bach.task_flow.dtos.requests.task.TaskUpdateRequest;
-import com.bach.task_flow.dtos.responses.task.AddUserToTaskResponse;
-import com.bach.task_flow.dtos.responses.task.StatusUpdateResponse;
-import com.bach.task_flow.dtos.responses.task.TaskCreationResponse;
-import com.bach.task_flow.dtos.responses.task.TaskUpdateResponse;
+import com.bach.task_flow.dtos.requests.task.*;
+import com.bach.task_flow.dtos.responses.task.*;
+import com.bach.task_flow.dtos.responses.user.UserResponse;
 import com.bach.task_flow.enums.Role;
 import com.bach.task_flow.enums.Status;
 import com.bach.task_flow.exceptions.ApplicationException;
 import com.bach.task_flow.exceptions.ErrorCode;
 import com.bach.task_flow.mappers.TaskMapper;
+import com.bach.task_flow.mappers.UserMapper;
 import com.bach.task_flow.repositories.ProjectRepository;
 import com.bach.task_flow.repositories.TaskRepository;
 import com.bach.task_flow.repositories.UserRepository;
@@ -24,6 +20,8 @@ import com.bach.task_flow.services.TaskService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -45,6 +43,7 @@ public class TaskServiceImpl implements TaskService {
     ProjectRepository projectRepository;
     UserRepository userRepository;
     TaskMapper taskMapper;
+    private final UserMapper userMapper;
 
 
     @PreAuthorize("hasAuthority('SCOPE_MANAGER')")
@@ -124,20 +123,10 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public AddUserToTaskResponse addUsersToTask(UUID taskId, AddUserToTaskRequest request) {
 
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ApplicationException(ErrorCode.TASK_NOT_FOUND));
-        if(!task.getProject().getManager().getUsername().equals(authentication.getName())){
-            throw new ApplicationException(ErrorCode.TASK_ACCESS_DENIED);
-        }
-        if(request.getUsernames().isEmpty()){
-            throw new ApplicationException(ErrorCode.NO_USERNAME);
-        }
 
-        Set<User> members = userRepository.findAllByUsernameIn(request.getUsernames());
-        if(members.size() != request.getUsernames().size()){
-            throw new ApplicationException(ErrorCode.USER_NOT_FOUND);
-        }
+        Task task = validateProjectManger(taskId);
+
+        Set<User> members = validateMembers(request.getUsernames());
 
         members.forEach((member) -> {
             if(!task.getProject().getMembers().contains(member)){
@@ -151,6 +140,44 @@ public class TaskServiceImpl implements TaskService {
 
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_MANAGER')")
+    @Override
+    public DeleteUserFromTaskResponse deleteUserFromTask(UUID taskId, DeleteUserFromTaskRequest request) {
+        Task task = validateProjectManger(taskId);
+        Set<User> validatedUsers = validateMembers(request.getUsernames());
+        validatedUsers.forEach((validatedUser) -> {
+            if(!task.getProject().getMembers().contains(validatedUser)){
+                throw new ApplicationException(ErrorCode.TASK_ACCESS_DENIED);
+            }
+            task.getUsers().remove(validatedUser);
+            validatedUser.getTasks().remove(task);
+        });
+        return taskMapper.toDeleteUserFromTaskResponse(taskRepository.save(task));
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('SCOPE_ADMIN')")
+    public Page<TaskResponse> getAllTasks(Pageable pageable) {
+        Page<Task> tasks = taskRepository.findAll(pageable);
+        return tasks.map(taskMapper::toTaskResponse);
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public TaskResponse getTask(UUID taskId) {
+        validateCurrentUser(taskId);
+        Task task = taskRepository.findById(taskId).orElseThrow(() -> new ApplicationException(ErrorCode.TASK_NOT_FOUND));
+        return taskMapper.toTaskResponse(task);
+    }
+
+    @Override
+    @PreAuthorize("isAuthenticated()")
+    public Page<UserResponse> getUsers(UUID taskId, Pageable pageable) {
+        validateCurrentUser(taskId);
+        Page<User> users = userRepository.findAllByTasks_Id(taskId, pageable);
+        return users.map(userMapper::toUserResponse);
+    }
+
 
     private void validateProjectManager(Project project){
 
@@ -161,5 +188,41 @@ public class TaskServiceImpl implements TaskService {
             throw new ApplicationException(ErrorCode.PROJECT_ACCESS_DENIED);
         }
 
+    }
+
+    private void validateCurrentUser(UUID taskId){
+
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.TASK_NOT_FOUND));
+        Project project = task.getProject();
+        if(!user.getTasks().contains(task) && !project.getManager().getUsername().equals(authentication.getName()) && !(user.getRole() == Role.ADMIN)){
+            throw new ApplicationException(ErrorCode.TASK_ACCESS_DENIED);
+        }
+
+    }
+
+    private Task validateProjectManger(UUID taskId){
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ApplicationException(ErrorCode.TASK_NOT_FOUND));
+        if(!task.getProject().getManager().getUsername().equals(authentication.getName())){
+            throw new ApplicationException(ErrorCode.TASK_ACCESS_DENIED);
+        }
+        return task;
+    }
+
+    private Set<User> validateMembers(Set<String> usernames){
+        if(usernames.isEmpty()){
+            throw new ApplicationException(ErrorCode.NO_USERNAME);
+        }
+
+        Set<User> members = userRepository.findAllByUsernameIn(usernames);
+        if(members.size() != usernames.size()){
+            throw new ApplicationException(ErrorCode.USER_NOT_FOUND);
+        }
+        return members;
     }
 }

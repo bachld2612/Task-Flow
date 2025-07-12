@@ -19,5 +19,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     void deleteByUsername(String username);
     Set<User> findAllByUsernameIn(Set<String> usernames);
     Page<User> findAllByProjects_Id(UUID projectId, Pageable pageable);
+    Page<User> findAllByTasks_Id(UUID taskId, Pageable pageable);
 
 }

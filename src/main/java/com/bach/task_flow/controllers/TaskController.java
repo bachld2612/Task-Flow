@@ -2,14 +2,10 @@ package com.bach.task_flow.controllers;
 
 
 import com.bach.task_flow.dtos.ApiResponse;
-import com.bach.task_flow.dtos.requests.task.AddUserToTaskRequest;
-import com.bach.task_flow.dtos.requests.task.StatusUpdateRequest;
-import com.bach.task_flow.dtos.requests.task.TaskCreationRequest;
-import com.bach.task_flow.dtos.requests.task.TaskUpdateRequest;
-import com.bach.task_flow.dtos.responses.task.AddUserToTaskResponse;
-import com.bach.task_flow.dtos.responses.task.StatusUpdateResponse;
-import com.bach.task_flow.dtos.responses.task.TaskCreationResponse;
-import com.bach.task_flow.dtos.responses.task.TaskUpdateResponse;
+import com.bach.task_flow.dtos.requests.task.*;
+import com.bach.task_flow.dtos.responses.project.DeleteMemberFromProjectResponse;
+import com.bach.task_flow.dtos.responses.task.*;
+import com.bach.task_flow.dtos.responses.user.UserResponse;
 import com.bach.task_flow.services.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -18,8 +14,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
@@ -128,6 +129,43 @@ public class TaskController {
 
         return ApiResponse.<AddUserToTaskResponse>builder()
                 .result(taskService.addUsersToTask(taskId, request))
+                .build();
+
+    }
+
+    @PatchMapping("/{taskId}/delete-users")
+    public  ApiResponse<DeleteUserFromTaskResponse> deleteUserFromTask(@PathVariable UUID taskId, @RequestBody DeleteUserFromTaskRequest request){
+
+        return ApiResponse.<DeleteUserFromTaskResponse>builder()
+                .result(taskService.deleteUserFromTask(taskId, request))
+                .build();
+
+    }
+
+    @GetMapping()
+    public ApiResponse<Page<TaskResponse>> getAllTasks(@PageableDefault(page = 0, size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ApiResponse.<Page<TaskResponse>>builder()
+                .result(taskService.getAllTasks(pageable))
+                .build();
+
+    }
+
+    @GetMapping("/{taskId}")
+    public ApiResponse<TaskResponse> getTask(@PathVariable UUID taskId) {
+
+        return ApiResponse.<TaskResponse>builder()
+                .result(taskService.getTask(taskId))
+                .build();
+
+    }
+
+    @GetMapping("/{taskId}/users")
+    public ApiResponse<Page<UserResponse>> getUsers(@PathVariable UUID taskId,
+                                                    @PageableDefault(page = 0, size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        return ApiResponse.<Page<UserResponse>>builder()
+                .result(taskService.getUsers(taskId, pageable))
                 .build();
 
     }

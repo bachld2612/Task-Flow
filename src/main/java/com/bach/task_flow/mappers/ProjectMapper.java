@@ -22,11 +22,9 @@ public interface ProjectMapper {
     @Mapping(target = "managerName", source = "manager")
     ProjectCreationResponse toProjectCreationResponse(Project project);
 
-    @Mapping(target = "projectName", source = "name")
     @Mapping(target = "memberNames", source = "members")
     AddMemberToProjectResponse toAddMemberToProjectResponse(Project project);
 
-    @Mapping(target = "projectName", source = "name")
     @Mapping(target = "memberNames", source = "members")
     DeleteMemberFromProjectResponse toDeleteMemberFromProjectResponse(Project project);
 

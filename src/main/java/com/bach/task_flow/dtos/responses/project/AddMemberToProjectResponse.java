@@ -13,7 +13,6 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AddMemberToProjectResponse {
 
-    String projectName;
     Set<String> memberNames;
 
 }

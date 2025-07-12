@@ -1,4 +1,4 @@
-package com.bach.task_flow.dtos.responses.project;
+package com.bach.task_flow.dtos.responses.task;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -10,8 +10,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DeleteMemberFromProjectResponse {
+public class DeleteUserFromTaskResponse {
 
-    Set<String> memberNames;
+    Set<String> usernames;
 
 }

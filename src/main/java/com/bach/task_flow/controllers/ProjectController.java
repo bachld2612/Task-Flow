@@ -387,7 +387,7 @@ public class ProjectController {
 
     }
 
-    @GetMapping("/{projectId}/task")
+    @GetMapping("/{projectId}/tasks")
     public ApiResponse<Page<TaskResponse>> getTasks(@PathVariable UUID projectId,
                                                     @PageableDefault(page = 0, size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable){
 
