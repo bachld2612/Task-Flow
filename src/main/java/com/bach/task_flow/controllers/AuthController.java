@@ -19,8 +19,11 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -201,10 +204,10 @@ public class AuthController {
             )
     })
     @PostMapping("/token")
-    public ApiResponse<LoginResponse> login(@Valid LoginRequest loginRequest){
+    public ApiResponse<LoginResponse> login(@Valid LoginRequest loginRequest, HttpServletResponse response){
 
         return ApiResponse.<LoginResponse>builder()
-                .result(authService.login(loginRequest))
+                .result(authService.login(loginRequest, response))
                 .build();
 
     }
@@ -261,9 +264,9 @@ public class AuthController {
             )
     })
     @PostMapping("/logout")
-    public ApiResponse<String> logout(LogoutRequest logoutRequest) throws ParseException, JOSEException {
+    public ApiResponse<String> logout(LogoutRequest logoutRequest, HttpServletRequest request, HttpServletResponse response) throws ParseException, JOSEException {
 
-        authService.logout(logoutRequest);
+        authService.logout(logoutRequest, request, response);
         return ApiResponse.<String>builder()
                 .result("Logout Successfully")
                 .build();
@@ -312,6 +315,15 @@ public class AuthController {
 
         return ApiResponse.<InfoResponse>builder()
                 .result(authService.getMyInfo())
+                .build();
+
+    }
+
+    @GetMapping("/refresh-token")
+    public ApiResponse<LoginResponse> refreshToken(HttpServletRequest request){
+
+        return ApiResponse.<LoginResponse>builder()
+                .result(authService.refreshToken(request))
                 .build();
 
     }

@@ -36,6 +36,7 @@ public enum ErrorCode {
     INVALID_DUE_DATE(1023, "Due date must be after today", HttpStatus.BAD_REQUEST),
     TASK_NOT_FOUND(1024, "Task not found", HttpStatus.NOT_FOUND),
     TASK_ACCESS_DENIED(1025, "Task access denied", HttpStatus.BAD_REQUEST),
+    INVALID_REFRESH_TOKEN(1026, "Refresh token is invalid", HttpStatus.BAD_REQUEST),
     ;
     int code;
     String message;

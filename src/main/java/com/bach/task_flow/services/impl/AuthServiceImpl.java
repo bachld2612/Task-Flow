@@ -22,12 +22,16 @@ import com.bach.task_flow.mappers.EmailMapper;
 import com.bach.task_flow.repositories.EmailOtpRepository;
 import com.bach.task_flow.repositories.InvalidateTokenRepository;
 import com.bach.task_flow.repositories.UserRepository;
+import com.bach.task_flow.security.RefreshToken;
+import com.bach.task_flow.security.utils.RefreshTokenUtils;
 import com.bach.task_flow.services.EmailService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +40,7 @@ import lombok.experimental.NonFinal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,10 +49,8 @@ import org.springframework.stereotype.Service;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -63,10 +66,15 @@ public class AuthServiceImpl implements com.bach.task_flow.services.AuthService 
     EmailOtpRepository emailOtpRepository;
     EmailMapper emailMapper;
     InvalidateTokenRepository tokenRepository;
+    RedisTemplate<String, Object> redisTemplate;
 
     @NonFinal
     @Value("${jwt.signerKey}")
-    private String SIGNER_KEY;
+    String SIGNER_KEY;
+
+    @Value("${jwt.refreshTokenExpirationMs}")
+    @NonFinal
+    Long REFRESH_TOKEN_EXPIRATION_MS;
 
     @Override
     public RegisterResponse register(RegisterRequest request) {
@@ -122,7 +130,7 @@ public class AuthServiceImpl implements com.bach.task_flow.services.AuthService 
     }
 
     @Override
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request, HttpServletResponse response) {
 
         User user = userRepository.findByUsernameOrEmail(request.getAccount(),request.getAccount())
                 .orElseThrow(() -> new ApplicationException(ErrorCode.ACCOUNT_NOT_FOUND));
@@ -134,6 +142,8 @@ public class AuthServiceImpl implements com.bach.task_flow.services.AuthService 
         if(!user.isEnabled()){
             throw new ApplicationException(ErrorCode.ACCOUNT_NOT_ACTIVATED);
         }
+
+        saveRefreshToken(user.getId(), response);
 
         return LoginResponse.builder()
                 .token(generateToken(user))
@@ -156,8 +166,17 @@ public class AuthServiceImpl implements com.bach.task_flow.services.AuthService 
 
     }
 
+    @PreAuthorize("isAuthenticated()")
     @Override
-    public void logout(LogoutRequest request) throws ParseException, JOSEException {
+    public InfoResponse getMyInfo() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userRepository.findByUsername(authentication.getName())
+                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
+        return authMapper.toInfoResponse(user);
+    }
+
+    @Override
+    public void logout(LogoutRequest request, HttpServletRequest httpServletRequest, HttpServletResponse response) throws ParseException, JOSEException {
 
         SignedJWT signedJWT = verifyToken(request.getToken());
         String tokenId = signedJWT.getJWTClaimsSet().getJWTID();
@@ -167,16 +186,27 @@ public class AuthServiceImpl implements com.bach.task_flow.services.AuthService 
                 .expiryTime(expiration)
                 .build();
         tokenRepository.save(invalidateToken);
+        String refreshToken = RefreshTokenUtils.getRefreshTokenFromCookie(httpServletRequest);
+        if(refreshToken != null && !refreshToken.isBlank()) {
+            String key = "refreshToken:" + refreshToken;
+            redisTemplate.delete(key);
+        }
+        RefreshTokenUtils.clearRefreshTokenCookie(response);
 
     }
 
-    @PreAuthorize("isAuthenticated()")
     @Override
-    public InfoResponse getMyInfo() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
-        return authMapper.toInfoResponse(user);
+    public LoginResponse refreshToken(HttpServletRequest httpServletRequest) {
+        String refreshToken = RefreshTokenUtils.getRefreshTokenFromCookie(httpServletRequest);
+        String key =  "refreshToken:" + refreshToken;
+        RefreshToken token = (RefreshToken) redisTemplate.opsForValue().get(key);
+        if(refreshToken == null || refreshToken.isBlank() || Objects.requireNonNull(token).getExpirationTime().isBefore(Instant.now())) {
+            throw new ApplicationException(ErrorCode.INVALID_REFRESH_TOKEN);
+        }
+        User user = userRepository.findById(token.getUserId()).orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND));
+        return LoginResponse.builder()
+                .token(generateToken(user))
+                .build();
     }
 
     private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
@@ -216,4 +246,19 @@ public class AuthServiceImpl implements com.bach.task_flow.services.AuthService 
             throw new RuntimeException(e.getMessage());
         }
     }
+
+    private void saveRefreshToken(UUID userId, HttpServletResponse response) {
+
+        RefreshToken refreshToken = RefreshToken.builder()
+                .token(UUID.randomUUID().toString())
+                .userId(userId)
+                .expirationTime(Instant.now().plusMillis(REFRESH_TOKEN_EXPIRATION_MS))
+                .build();
+        String key = "refreshToken:"+refreshToken.getToken();
+        redisTemplate.opsForValue().set(key, refreshToken);
+        redisTemplate.expire(key, refreshToken.getExpirationTime().toEpochMilli() - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+        RefreshTokenUtils.setRefreshTokenCookie(response, refreshToken.getToken(), REFRESH_TOKEN_EXPIRATION_MS);
+
+    }
+
 }
